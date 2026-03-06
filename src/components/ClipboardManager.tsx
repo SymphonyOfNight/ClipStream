@@ -16,7 +16,7 @@ interface ClipboardItem {
 const DB_NAME = 'clipstream-db';
 const STORE_NAME = 'items';
 
-// Helper to format shortcut for display
+// 格式化快捷键以进行显示的辅助函数
 const renderShortcut = (shortcut: string) => {
   const parts = shortcut.split('+');
   return (
@@ -85,18 +85,18 @@ export default function ClipboardManager() {
   const [showTray, setShowTray] = useState(() => {
     if (typeof window !== 'undefined') {
         const stored = localStorage.getItem('showTray');
-        return stored !== null ? stored === 'true' : false;
+        return stored !== null ? stored === 'true' : true; // 默认为 true
     }
-    return false;
+    return true; // 默认为 true
   });
   
-  // Temporary settings state for modal
+  // 模态框的临时设置状态
   const [tempSettings, setTempSettings] = useState({
     shortcut: '',
     maxItems: 50,
     windowPosition: 'mouse',
     showDock: true,
-    showTray: false
+    showTray: true // 默认为 true
   });
 
   const [isRecordingShortcut, setIsRecordingShortcut] = useState(false);
@@ -104,7 +104,7 @@ export default function ClipboardManager() {
   const searchInputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
-  // Initialize DB and load items
+  // 初始化数据库并加载项目
   useEffect(() => {
     const init = async () => {
       const db = await openDB(DB_NAME, 1, {
@@ -120,7 +120,7 @@ export default function ClipboardManager() {
     init();
   }, []);
 
-  // Initialize temp settings when opening modal
+  // 打开模态框时初始化临时设置
   useEffect(() => {
     if (showSettings) {
       setTempSettings({
@@ -133,7 +133,7 @@ export default function ClipboardManager() {
     }
   }, [showSettings]);
 
-  // Update dock visibility
+  // 更新 Dock 可见性
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require) {
       const { ipcRenderer } = window.require('electron');
@@ -141,7 +141,7 @@ export default function ClipboardManager() {
     }
   }, [showDock]);
 
-  // Update tray visibility
+  // 更新托盘可见性
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require) {
       const { ipcRenderer } = window.require('electron');
@@ -149,7 +149,7 @@ export default function ClipboardManager() {
     }
   }, [showTray]);
 
-  // Handle settings open/close for shortcut disabling and blur ignoring
+  // 处理设置打开/关闭以禁用快捷键和忽略失去焦点
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require) {
       const { ipcRenderer } = window.require('electron');
@@ -159,18 +159,18 @@ export default function ClipboardManager() {
       } else {
         ipcRenderer.send('set-shortcut-enabled', true);
         ipcRenderer.send('set-ignore-blur', false);
-        // Ensure current shortcut is active
+        // 确保当前快捷键处于活动状态
         ipcRenderer.send('update-shortcut', shortcut);
       }
     }
   }, [showSettings, shortcut]);
 
-  // Update shortcut in main process (only when not in settings, or handled by above effect)
-  // Actually, we only want to update when shortcut changes AND we are not in settings (or just let the above effect handle re-enabling)
-  // But if we change shortcut while in settings, we don't want to register it yet until we close settings?
-  // Or we can register it but it's disabled.
-  // Let's keep the original effect but maybe it's redundant if we handle it in showSettings effect.
-  // However, on initial load, showSettings is false, so we need to register.
+  // 在主进程中更新快捷键（仅当不在设置中时，或由上述效果处理）
+  // 实际上，我们只想在快捷键更改且不在设置中时更新（或者让上述效果处理重新启用）
+  // 但是如果我们在设置中更改快捷键，我们不想在关闭设置之前注册它？
+  // 或者我们可以注册它，但它是禁用的。
+  // 让我们保留原始效果，但如果我们在 showSettings 效果中处理它，可能它是多余的。
+  // 但是，在初始加载时，showSettings 为 false，所以我们需要注册。
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require && !showSettings) {
       const { ipcRenderer } = window.require('electron');
@@ -178,7 +178,7 @@ export default function ClipboardManager() {
     }
   }, [shortcut]);
 
-  // Update window position in main process
+  // 在主进程中更新窗口位置
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require) {
       const { ipcRenderer } = window.require('electron');
@@ -198,7 +198,7 @@ export default function ClipboardManager() {
     setItems(loadedItems);
   };
 
-  // Handle Paste Event (Manual paste into window)
+  // 处理粘贴事件（手动粘贴到窗口中）
   useEffect(() => {
     const handlePaste = async (e: ClipboardEvent) => {
       const items = e.clipboardData?.items;
@@ -213,8 +213,8 @@ export default function ClipboardManager() {
             const reader = new FileReader();
             reader.onload = async (event) => {
               const base64 = event.target?.result as string;
-              // Add logic handled by db service usually, but here we do it manually for now
-              // Ideally should use addClipboardItem service
+              // 添加通常由 db 服务处理的逻辑，但现在我们手动处理
+              // 理想情况下应该使用 addClipboardItem 服务
               await db.add(STORE_NAME, {
                 type: 'image',
                 content: blob,
@@ -244,7 +244,7 @@ export default function ClipboardManager() {
     return () => window.removeEventListener('paste', handlePaste);
   }, []);
 
-  // Keyboard Navigation
+  // 键盘导航
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (showSettings) return;
@@ -267,7 +267,7 @@ export default function ClipboardManager() {
         if (searchQuery) {
             setSearchQuery('');
         } else {
-            // Hide window via IPC if needed, but usually handled by global shortcut toggle
+            // 如果需要，通过 IPC 隐藏窗口，但通常由全局快捷键切换处理
         }
       }
     };
@@ -299,7 +299,7 @@ export default function ClipboardManager() {
         ]);
       }
       
-      // Trigger paste in main process
+      // 在主进程中触发粘贴
       if (typeof window !== 'undefined' && window.require) {
         const { ipcRenderer } = window.require('electron');
         ipcRenderer.send('paste-content');
@@ -338,7 +338,7 @@ export default function ClipboardManager() {
   };
 
   const saveSettings = () => {
-    // Commit changes
+    // 提交更改
     setShortcut(tempSettings.shortcut);
     setMaxItems(tempSettings.maxItems);
     setWindowPosition(tempSettings.windowPosition);
@@ -353,7 +353,7 @@ export default function ClipboardManager() {
     
     setShowSettings(false);
     setIsRecordingShortcut(false);
-    // Reload items to respect new limit
+    // 重新加载项目以遵守新限制
     openDB(DB_NAME, 1).then(loadItems);
   };
 
@@ -362,47 +362,49 @@ export default function ClipboardManager() {
     e.stopPropagation();
 
     const modifiers = [];
-    if (e.metaKey) modifiers.push('Command'); // Electron uses Command on Mac
-    if (e.ctrlKey && !e.metaKey) modifiers.push('Control'); // Avoid double command/control on mac if both pressed? usually meta is command
+    if (e.metaKey) modifiers.push('Command'); // Electron 在 Mac 上使用 Command
+    if (e.ctrlKey && !e.metaKey) modifiers.push('Control'); // 如果同时按下，避免在 mac 上出现双重 command/control？通常 meta 是 command
     if (e.altKey) modifiers.push('Alt');
     if (e.shiftKey) modifiers.push('Shift');
 
-    // If only modifiers are pressed, don't set yet
+    // 如果只按下了修饰键，暂时不要设置
     if (['Meta', 'Control', 'Alt', 'Shift'].includes(e.key)) return;
 
     let key = e.key.toUpperCase();
     if (key === ' ') key = 'Space';
     
-    // Construct Electron accelerator string
+    // 构建 Electron 加速器字符串
     let electronModifiers = [];
     if (e.metaKey) electronModifiers.push('Command');
     if (e.ctrlKey) electronModifiers.push('Control');
     if (e.altKey) electronModifiers.push('Alt');
     if (e.shiftKey) electronModifiers.push('Shift');
     
-    // If no modifiers, might be invalid global shortcut, but let's allow F-keys etc.
+    // 如果没有修饰键，可能是无效的全局快捷键，但让我们允许 F 键等。
     const newShortcut = [...electronModifiers, key].join('+');
     setTempSettings(prev => ({ ...prev, shortcut: newShortcut }));
     setIsRecordingShortcut(false);
   };
 
-  // Scroll selected item into view
+  // 将选定的项目滚动到视图中
   useEffect(() => {
     if (listRef.current) {
-      const selectedEl = listRef.current.children[selectedIndex] as HTMLElement;
+      // 查找选定项目的实际 DOM 元素
+      // 我们需要通过 id 或 class 查询，因为 AnimatePresence 可能会添加/删除元素
+      const selectedEl = listRef.current.querySelector(`#item-${filteredItems[selectedIndex]?.id}`) as HTMLElement;
       if (selectedEl) {
-        selectedEl.scrollIntoView({ block: 'nearest' });
+        selectedEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
       }
     }
-  }, [selectedIndex]);
+  }, [selectedIndex, filteredItems]);
 
-  // Listen for Electron clipboard events
+  // 监听 Electron 剪贴板事件
   useEffect(() => {
     if (typeof window !== 'undefined' && window.require) {
       try {
         const { ipcRenderer } = window.require('electron');
         const handleClipboardChanged = async (_: any, item: any) => {
-          // Dynamic import to avoid SSR issues if any (though this is SPA)
+          // 动态导入以避免 SSR 问题（如果有的话）（虽然这是 SPA）
           const { addClipboardItem } = await import('../services/db');
           
           let content: string | Blob = item.content;
@@ -439,7 +441,7 @@ export default function ClipboardManager() {
     <div className="flex flex-col h-screen bg-gray-50/90 backdrop-blur-xl text-gray-800 font-sans overflow-hidden select-none">
       <Toast message={toastMessage} onClose={() => setToastMessage(null)} />
       
-      {/* Header / Search */}
+      {/* 头部 / 搜索 */}
       <div 
         className="flex-none px-3 pt-3 pb-2 bg-white/80 border-b border-gray-200 shadow-sm z-10 backdrop-blur-md"
         style={{ WebkitAppRegion: 'drag' } as any}
@@ -503,7 +505,7 @@ export default function ClipboardManager() {
         </div>
       </div>
 
-      {/* List */}
+      {/* 列表 */}
       <div className="flex-1 overflow-y-auto p-2" ref={listRef}>
         <div className="space-y-1.5">
           <AnimatePresence initial={false}>
@@ -527,7 +529,7 @@ export default function ClipboardManager() {
                     : "bg-white border-gray-100 hover:border-gray-200"
                 )}
               >
-                {/* Icon */}
+                {/* 图标 */}
                 <div className={cn(
                   "flex-none p-1.5 rounded-md mt-0.5",
                   selectedIndex === index ? "bg-blue-100 text-blue-600" : "bg-gray-100 text-gray-400"
@@ -535,7 +537,7 @@ export default function ClipboardManager() {
                   {item.type === 'text' ? <Copy size={14} /> : <ImageIcon size={14} />}
                 </div>
 
-                {/* Content */}
+                {/* 内容 */}
                 <div className="flex-1 min-w-0 overflow-hidden">
                   <div className="flex justify-between items-baseline mb-0.5">
                     <span className="text-[10px] font-medium text-gray-400 font-mono">
@@ -562,7 +564,7 @@ export default function ClipboardManager() {
                   )}
                 </div>
 
-                {/* Actions */}
+                {/* 操作 */}
                 <div className="flex-none flex flex-col gap-1 opacity-0 group-hover:opacity-100 transition-opacity absolute right-2 top-2 bg-white/80 backdrop-blur-sm rounded shadow-sm border border-gray-100">
                     <button
                         onClick={(e) => handleDelete(e, item.id!)}
@@ -588,7 +590,7 @@ export default function ClipboardManager() {
         </div>
       </div>
 
-      {/* Settings Modal */}
+      {/* 设置模态框 */}
       {showSettings && (
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 space-y-4">
