@@ -1,0 +1,5 @@
+{
+  "name": "ClipStream",
+  "description": "A lightweight, high-performance clipboard history manager prototype. Features text and image support, keyboard navigation, and a minimal macOS-like interface.",
+  "requestFramePermissions": []
+}
