@@ -348,6 +348,17 @@ ipcMain.on('set-show-tray', (event, show) => {
   }
 });
 
+ipcMain.handle('get-auto-launch', () => {
+  return app.getLoginItemSettings().openAtLogin;
+});
+
+ipcMain.on('set-auto-launch', (event, enable) => {
+  app.setLoginItemSettings({
+    openAtLogin: enable,
+    path: app.getPath('exe')
+  });
+});
+
   ipcMain.on('paste-content', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       log.info('Received paste-content request from renderer');

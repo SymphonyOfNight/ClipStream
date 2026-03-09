@@ -88,6 +88,7 @@ export default function ClipboardManager() {
     }
     return true; // 默认为 true
   });
+  const [autoLaunch, setAutoLaunch] = useState(false);
   
   // 模态框的临时设置状态
   const [tempSettings, setTempSettings] = useState({
@@ -95,7 +96,8 @@ export default function ClipboardManager() {
     maxItems: 50,
     windowPosition: 'mouse',
     showDock: true,
-    showTray: true // 默认为 true
+    showTray: true, // 默认为 true
+    autoLaunch: false
   });
 
   const [isRecordingShortcut, setIsRecordingShortcut] = useState(false);
@@ -117,6 +119,15 @@ export default function ClipboardManager() {
       loadItems(db);
     };
     init();
+
+    // 获取开机自启状态
+    if (typeof window !== 'undefined' && window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.invoke('get-auto-launch').then((enabled: boolean) => {
+        setAutoLaunch(enabled);
+        setTempSettings(prev => ({ ...prev, autoLaunch: enabled }));
+      }).catch(console.error);
+    }
   }, []);
 
   // 打开模态框时初始化临时设置
@@ -127,7 +138,8 @@ export default function ClipboardManager() {
         maxItems,
         windowPosition,
         showDock,
-        showTray
+        showTray,
+        autoLaunch
       });
     }
   }, [showSettings]);
@@ -348,6 +360,12 @@ export default function ClipboardManager() {
     setWindowPosition(tempSettings.windowPosition);
     setShowDock(tempSettings.showDock);
     setShowTray(tempSettings.showTray);
+    setAutoLaunch(tempSettings.autoLaunch);
+
+    if (typeof window !== 'undefined' && window.require) {
+      const { ipcRenderer } = window.require('electron');
+      ipcRenderer.send('set-auto-launch', tempSettings.autoLaunch);
+    }
 
     localStorage.setItem('shortcut', tempSettings.shortcut);
     localStorage.setItem('maxItems', tempSettings.maxItems.toString());
@@ -664,6 +682,16 @@ export default function ClipboardManager() {
                             type="checkbox" 
                             checked={tempSettings.showTray}
                             onChange={(e) => setTempSettings(prev => ({ ...prev, showTray: e.target.checked }))}
+                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                        />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-gray-500">开机自启</label>
+                        <input 
+                            type="checkbox" 
+                            checked={tempSettings.autoLaunch}
+                            onChange={(e) => setTempSettings(prev => ({ ...prev, autoLaunch: e.target.checked }))}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
                     </div>
