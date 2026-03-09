@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { openDB } from 'idb';
 import { cn } from '../lib/utils';
-import { Copy, Image as ImageIcon, Trash2, Search, Command, X, Settings, Keyboard } from 'lucide-react';
+import { Copy, Image as ImageIcon, Trash2, Search, Command, X, Settings, Keyboard, Layers, AlignLeft, Monitor, LayoutTemplate, AppWindow, Rocket, Globe } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Toast from './Toast';
 import { i18n, Language } from './i18n';
@@ -648,127 +648,188 @@ export default function ClipboardManager() {
       {/* 设置模态框 */}
       {showSettings && (
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-            <div className="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 space-y-4">
-                <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Settings size={16} /> {t.settings}
-                </h3>
-                
-                <div className="space-y-3">
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.shortcut}</label>
-                        <div 
-                            className={cn(
-                                "w-full px-3 py-2 bg-gray-50 border rounded text-sm flex items-center justify-center cursor-pointer transition-colors",
-                                isRecordingShortcut ? "border-blue-500 bg-blue-50 text-blue-700" : "border-gray-200 text-gray-700 hover:border-gray-300"
-                            )}
-                            onClick={() => setIsRecordingShortcut(true)}
-                            onKeyDown={isRecordingShortcut ? handleShortcutKeyDown : undefined}
-                            tabIndex={0}
-                        >
-                            {isRecordingShortcut ? (
-                                <span className="animate-pulse">{t.pressShortcut}</span>
-                            ) : (
-                                <div className="flex items-center gap-1 font-mono">
-                                    {renderShortcut(tempSettings.shortcut)}
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.maxItems}</label>
-                        <input 
-                            type="number" 
-                            value={tempSettings.maxItems}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, maxItems: Number(e.target.value) }))}
-                            className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.maxLines}</label>
-                        <select 
-                            value={tempSettings.maxLines}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, maxLines: Number(e.target.value) }))}
-                            className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        >
-                            <option value={1}>1</option>
-                            <option value={2}>2</option>
-                            <option value={3}>3</option>
-                            <option value={4}>4</option>
-                            <option value={5}>5</option>
-                            <option value={0}>{t.unlimitedLines}</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.windowPosition}</label>
-                        <select 
-                            value={tempSettings.windowPosition}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, windowPosition: e.target.value }))}
-                            className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        >
-                            <option value="mouse">{t.followMouse}</option>
-                            <option value="top-right">{t.topRight}</option>
-                            <option value="top-left">{t.topLeft}</option>
-                            <option value="bottom-right">{t.bottomRight}</option>
-                            <option value="bottom-left">{t.bottomLeft}</option>
-                        </select>
-                    </div>
-                    
-                    <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">{t.showDock}</label>
-                        <input 
-                            type="checkbox" 
-                            checked={tempSettings.showDock}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, showDock: e.target.checked }))}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">{t.showTray}</label>
-                        <input 
-                            type="checkbox" 
-                            checked={tempSettings.showTray}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, showTray: e.target.checked }))}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">{t.autoLaunch}</label>
-                        <input 
-                            type="checkbox" 
-                            checked={tempSettings.autoLaunch}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, autoLaunch: e.target.checked }))}
-                            className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
-                        />
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">{t.language}</label>
-                        <select 
-                            value={tempSettings.language}
-                            onChange={(e) => setTempSettings(prev => ({ ...prev, language: e.target.value as Language }))}
-                            className="px-2 py-1 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
-                        >
-                            <option value="zh">中文</option>
-                            <option value="en">English</option>
-                        </select>
-                    </div>
-                </div>
-
-                <div className="flex justify-end gap-2 pt-2">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden flex flex-col max-h-[90vh]">
+                {/* Header */}
+                <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100 bg-gray-50/50">
+                    <h3 className="font-semibold text-gray-900 flex items-center gap-2 text-sm">
+                        <Settings size={16} className="text-gray-500" /> {t.settings}
+                    </h3>
                     <button 
                         onClick={() => {
                             setShowSettings(false);
                             setIsRecordingShortcut(false);
                         }}
-                        className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded"
+                        className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
+                    >
+                        <X size={16} />
+                    </button>
+                </div>
+                
+                {/* Content */}
+                <div className="p-5 space-y-6 overflow-y-auto">
+                    {/* General Section */}
+                    <div className="space-y-4">
+                        <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{t.settings}</h4>
+                        
+                        {/* Shortcut */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <Keyboard size={14} className="text-gray-400" /> {t.shortcut}
+                            </label>
+                            <div 
+                                className={cn(
+                                    "w-full px-3 py-2.5 bg-gray-50 border rounded-lg text-sm flex items-center justify-center cursor-pointer transition-all",
+                                    isRecordingShortcut ? "border-blue-500 bg-blue-50 text-blue-700 ring-2 ring-blue-500/20" : "border-gray-200 text-gray-700 hover:border-gray-300 hover:bg-gray-100/50"
+                                )}
+                                onClick={() => setIsRecordingShortcut(true)}
+                                onKeyDown={isRecordingShortcut ? handleShortcutKeyDown : undefined}
+                                tabIndex={0}
+                            >
+                                {isRecordingShortcut ? (
+                                    <span className="animate-pulse font-medium">{t.pressShortcut}</span>
+                                ) : (
+                                    <div className="flex items-center gap-1 font-mono">
+                                        {renderShortcut(tempSettings.shortcut)}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Max Items */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <Layers size={14} className="text-gray-400" /> {t.maxItems}
+                            </label>
+                            <input 
+                                type="number" 
+                                value={tempSettings.maxItems}
+                                onChange={(e) => setTempSettings(prev => ({ ...prev, maxItems: Number(e.target.value) }))}
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all"
+                            />
+                        </div>
+
+                        {/* Max Lines */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <AlignLeft size={14} className="text-gray-400" /> {t.maxLines}
+                            </label>
+                            <select 
+                                value={tempSettings.maxLines}
+                                onChange={(e) => setTempSettings(prev => ({ ...prev, maxLines: Number(e.target.value) }))}
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                            >
+                                <option value={1}>1</option>
+                                <option value={2}>2</option>
+                                <option value={3}>3</option>
+                                <option value={4}>4</option>
+                                <option value={5}>5</option>
+                                <option value={0}>{t.unlimitedLines}</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div className="h-px bg-gray-100 w-full"></div>
+
+                    {/* Appearance & System Section */}
+                    <div className="space-y-4">
+                        <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Appearance & System</h4>
+                        
+                        {/* Window Position */}
+                        <div className="space-y-2">
+                            <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                <Monitor size={14} className="text-gray-400" /> {t.windowPosition}
+                            </label>
+                            <select 
+                                value={tempSettings.windowPosition}
+                                onChange={(e) => setTempSettings(prev => ({ ...prev, windowPosition: e.target.value }))}
+                                className="w-full px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none"
+                            >
+                                <option value="mouse">{t.followMouse}</option>
+                                <option value="top-right">{t.topRight}</option>
+                                <option value="top-left">{t.topLeft}</option>
+                                <option value="bottom-right">{t.bottomRight}</option>
+                                <option value="bottom-left">{t.bottomLeft}</option>
+                            </select>
+                        </div>
+                        
+                        {/* Toggles */}
+                        <div className="space-y-3 pt-2">
+                            <label className="flex items-center justify-between cursor-pointer group">
+                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <LayoutTemplate size={14} className="text-gray-400" /> {t.showDock}
+                                </div>
+                                <div className="relative">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={tempSettings.showDock}
+                                        onChange={(e) => setTempSettings(prev => ({ ...prev, showDock: e.target.checked }))}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                                </div>
+                            </label>
+
+                            <label className="flex items-center justify-between cursor-pointer group">
+                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <AppWindow size={14} className="text-gray-400" /> {t.showTray}
+                                </div>
+                                <div className="relative">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={tempSettings.showTray}
+                                        onChange={(e) => setTempSettings(prev => ({ ...prev, showTray: e.target.checked }))}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                                </div>
+                            </label>
+
+                            <label className="flex items-center justify-between cursor-pointer group">
+                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <Rocket size={14} className="text-gray-400" /> {t.autoLaunch}
+                                </div>
+                                <div className="relative">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={tempSettings.autoLaunch}
+                                        onChange={(e) => setTempSettings(prev => ({ ...prev, autoLaunch: e.target.checked }))}
+                                        className="sr-only peer"
+                                    />
+                                    <div className="w-9 h-5 bg-gray-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-blue-500"></div>
+                                </div>
+                            </label>
+
+                            <div className="flex items-center justify-between pt-1">
+                                <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                                    <Globe size={14} className="text-gray-400" /> {t.language}
+                                </div>
+                                <select 
+                                    value={tempSettings.language}
+                                    onChange={(e) => setTempSettings(prev => ({ ...prev, language: e.target.value as Language }))}
+                                    className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none text-center min-w-[80px]"
+                                >
+                                    <option value="zh">中文</option>
+                                    <option value="en">English</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                {/* Footer */}
+                <div className="flex justify-end gap-3 px-5 py-4 border-t border-gray-100 bg-gray-50/50">
+                    <button 
+                        onClick={() => {
+                            setShowSettings(false);
+                            setIsRecordingShortcut(false);
+                        }}
+                        className="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200/50 bg-gray-100 rounded-lg transition-colors"
                     >
                         {t.cancel}
                     </button>
                     <button 
                         onClick={saveSettings}
-                        className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm"
+                        className="px-4 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition-colors"
                     >
                         {t.save}
                     </button>
