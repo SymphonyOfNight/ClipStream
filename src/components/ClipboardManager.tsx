@@ -732,7 +732,7 @@ export default function ClipboardManager() {
 
                     {/* Appearance & System Section */}
                     <div className="space-y-4">
-                        <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">Appearance & System</h4>
+                        <h4 className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{t.appearanceAndSystem}</h4>
                         
                         {/* Window Position */}
                         <div className="space-y-2">

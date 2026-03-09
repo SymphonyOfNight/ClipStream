@@ -28,4 +28,5 @@ export const zh = {
   language: '语言',
   maxLines: '最多展示行数',
   unlimitedLines: '不折叠',
+  appearanceAndSystem: '外观与系统',
 };

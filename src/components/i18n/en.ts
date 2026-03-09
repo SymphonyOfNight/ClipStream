@@ -28,4 +28,5 @@ export const en = {
   language: 'Language',
   maxLines: 'Max Display Lines',
   unlimitedLines: 'Unlimited',
+  appearanceAndSystem: 'Appearance & System',
 };
