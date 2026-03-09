@@ -8,7 +8,6 @@ let lastText = '';
 let lastImage = '';
 let currentShortcut = 'CommandOrControl+Shift+V';
 let windowPosition = 'mouse'; // mouse, top-right, top-left, bottom-right, bottom-left
-let isPinned = false;
 let ignoreBlur = false;
 let shortcutsEnabled = true;
 
@@ -39,9 +38,9 @@ function createWindow() {
 
   mainWindow = win;
 
-  // 如果未固定且未忽略失去焦点（例如在设置中），则在失去焦点时隐藏
+  // 如果未忽略失去焦点（例如在设置中），则在失去焦点时隐藏
   win.on('blur', () => {
-    if (!isPinned && !ignoreBlur && win.isVisible()) {
+    if (!ignoreBlur && win.isVisible()) {
       win.hide();
     }
   });
@@ -302,13 +301,6 @@ function startClipboardPolling(win) {
   }, 1000);
 }
 
-ipcMain.on('set-always-on-top', (event, flag) => {
-  isPinned = flag;
-  if (mainWindow && !mainWindow.isDestroyed()) {
-    mainWindow.setAlwaysOnTop(flag, 'floating');
-    mainWindow.setVisibleOnAllWorkspaces(flag);
-  }
-});
 
 ipcMain.on('set-shortcut-enabled', (event, enabled) => {
   shortcutsEnabled = enabled;

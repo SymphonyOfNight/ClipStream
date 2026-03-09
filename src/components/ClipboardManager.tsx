@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { openDB } from 'idb';
 import { cn } from '../lib/utils';
-import { Copy, Image as ImageIcon, Trash2, Search, Command, X, Settings, Pin, PinOff, Keyboard } from 'lucide-react';
+import { Copy, Image as ImageIcon, Trash2, Search, Command, X, Settings, Keyboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Toast from './Toast';
 
@@ -58,7 +58,6 @@ export default function ClipboardManager() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
-  const [isPinned, setIsPinned] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [shortcut, setShortcut] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('shortcut') || 'CommandOrControl+Shift+V';
@@ -328,15 +327,6 @@ export default function ClipboardManager() {
     }
   };
 
-  const togglePin = () => {
-    const newState = !isPinned;
-    setIsPinned(newState);
-    if (typeof window !== 'undefined' && window.require) {
-      const { ipcRenderer } = window.require('electron');
-      ipcRenderer.send('set-always-on-top', newState);
-    }
-  };
-
   const saveSettings = () => {
     // 提交更改
     setShortcut(tempSettings.shortcut);
@@ -472,14 +462,6 @@ export default function ClipboardManager() {
                     </button>
                 )}
             </div>
-            <button 
-                onClick={togglePin}
-                className={cn("p-1.5 rounded-md transition-colors", isPinned ? "bg-blue-100 text-blue-600" : "hover:bg-gray-100 text-gray-500")}
-                title={isPinned ? "取消固定" : "固定窗口"}
-                style={{ WebkitAppRegion: 'no-drag' } as any}
-            >
-                {isPinned ? <Pin size={16} /> : <PinOff size={16} />}
-            </button>
             <button 
                 onClick={() => setShowSettings(true)}
                 className="p-1.5 hover:bg-gray-100 rounded-md text-gray-500 transition-colors"
