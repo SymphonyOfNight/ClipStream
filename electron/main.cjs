@@ -74,17 +74,17 @@ function createTray() {
     // 但是 Vite 通常会将公共资源复制到 dist 根目录。
     // 所以我们先检查 dist。
     
-    // 检查 dist/tray.png (相对于 electron 文件夹中的 main.cjs)
-    const distPath = path.join(__dirname, '../dist/tray.png');
+    // 检查 dist/trayTemplate.png (相对于 electron 文件夹中的 main.cjs)
+    const distPath = path.join(__dirname, '../dist/trayTemplate.png');
     
-    // 检查 public/tray.png (如果 public 文件夹被保留)
-    const publicPath = path.join(__dirname, '../public/tray.png');
+    // 检查 public/trayTemplate.png (如果 public 文件夹被保留)
+    const publicPath = path.join(__dirname, '../public/trayTemplate.png');
     
-    // 检查 resources/public/tray.png (如果使用了 extraResources)
-    const resourcesPath = path.join(process.resourcesPath, 'public', 'tray.png');
+    // 检查 resources/public/trayTemplate.png (如果使用了 extraResources)
+    const resourcesPath = path.join(process.resourcesPath, 'public', 'trayTemplate.png');
     
-    // 检查 app.asar/dist/tray.png (在某些构建中常见)
-    const asarDistPath = path.join(process.resourcesPath, 'app.asar', 'dist', 'tray.png');
+    // 检查 app.asar/dist/trayTemplate.png (在某些构建中常见)
+    const asarDistPath = path.join(process.resourcesPath, 'app.asar', 'dist', 'trayTemplate.png');
 
     if (require('fs').existsSync(distPath)) {
         iconPath = distPath;
@@ -101,11 +101,11 @@ function createTray() {
             iconPath = svgPath;
         } else {
             console.error('Tray icon not found in any expected location');
-            iconPath = path.join(__dirname, '../dist/tray.png'); // 默认为 dist png
+            iconPath = path.join(__dirname, '../dist/trayTemplate.png'); // 默认为 dist png
         }
     }
   } else {
-    iconPath = path.join(__dirname, '../public/tray.png');
+    iconPath = path.join(__dirname, '../public/trayTemplate.png');
     if (!require('fs').existsSync(iconPath)) {
         iconPath = path.join(__dirname, '../public/tray.svg');
     }
@@ -132,9 +132,8 @@ function createTray() {
       console.log('Successfully loaded tray icon from path:', iconPath);
   }
   
-  // 调整大小为 22x22 以确保适合菜单栏（macOS 标准）
-  icon = icon.resize({ width: 22, height: 22 });
-  icon.setTemplateImage(true);
+  // macOS 会自动将带有 "Template" 后缀的图片识别为模板图片，无需手动设置
+  // 并且我们已经生成了 22x22 和 44x44 (@2x) 的图片，无需手动 resize
 
   tray = new Tray(icon);
   
