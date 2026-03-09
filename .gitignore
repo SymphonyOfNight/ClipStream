@@ -6,3 +6,17 @@ coverage/
 *.log
 .env*
 !.env.example
+
+# Electron build output
+dist-electron/
+release/
+out/
+
+# IDEs and Editors
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
