@@ -11,7 +11,7 @@
     "clean": "rm -rf dist dist-electron",
     "lint": "tsc --noEmit",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run generate-icons && npm run build && electron-builder",
+    "electron:build": "npm run generate-icons && npm run build && ELECTRON_BUILDER_BINARIES_MIRROR=https://mirrors.huaweicloud.com/electron-builder-binaries/ electron-builder",
     "generate-icons": "node scripts/generate-icons.js"
   },
   "build": {
@@ -70,7 +70,7 @@
     "autoprefixer": "^10.4.21",
     "concurrently": "^9.2.1",
     "electron": "^40.7.0",
-    "electron-builder": "^26.8.1",
+    "electron-builder": "^24.13.3",
     "sharp": "^0.34.5",
     "tailwindcss": "^4.1.14",
     "tsx": "^4.21.0",
