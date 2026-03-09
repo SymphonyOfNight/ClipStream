@@ -307,7 +307,7 @@ function startClipboardPolling(win) {
       // 如果是新的，我们也发送图像。
       win.webContents.send('clipboard-changed', { type: 'image', content: imageDataUrl, timestamp: Date.now() });
     }
-  }, 1000);
+  }, 200);
 }
 
 

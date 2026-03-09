@@ -4,6 +4,7 @@ import { cn } from '../lib/utils';
 import { Copy, Image as ImageIcon, Trash2, Search, Command, X, Settings, Keyboard } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import Toast from './Toast';
+import { i18n, Language } from './i18n';
 
 interface ClipboardItem {
   id?: number;
@@ -70,6 +71,13 @@ export default function ClipboardManager() {
     }
     return 50;
   });
+  const [maxLines, setMaxLines] = useState(() => {
+    if (typeof window !== 'undefined') {
+        const stored = localStorage.getItem('maxLines');
+        return stored ? parseInt(stored) : 2;
+    }
+    return 2;
+  });
   const [windowPosition, setWindowPosition] = useState(() => {
     if (typeof window !== 'undefined') return localStorage.getItem('windowPosition') || 'mouse';
     return 'mouse';
@@ -89,15 +97,25 @@ export default function ClipboardManager() {
     return true; // 默认为 true
   });
   const [autoLaunch, setAutoLaunch] = useState(false);
+  const [language, setLanguage] = useState<Language>(() => {
+    if (typeof window !== 'undefined') {
+        return (localStorage.getItem('language') as Language) || 'zh';
+    }
+    return 'zh';
+  });
   
+  const t = i18n[language];
+
   // 模态框的临时设置状态
   const [tempSettings, setTempSettings] = useState({
     shortcut: '',
     maxItems: 50,
+    maxLines: 2,
     windowPosition: 'mouse',
     showDock: true,
     showTray: true, // 默认为 true
-    autoLaunch: false
+    autoLaunch: false,
+    language: 'zh' as Language
   });
 
   const [isRecordingShortcut, setIsRecordingShortcut] = useState(false);
@@ -136,10 +154,12 @@ export default function ClipboardManager() {
       setTempSettings({
         shortcut,
         maxItems,
+        maxLines,
         windowPosition,
         showDock,
         showTray,
-        autoLaunch
+        autoLaunch,
+        language
       });
     }
   }, [showSettings]);
@@ -330,10 +350,10 @@ export default function ClipboardManager() {
         ipcRenderer.send('paste-content');
       }
 
-      setToastMessage('已复制并粘贴');
+      setToastMessage(t.copiedAndPasted);
     } catch (err: any) {
       logToMain('error', 'Failed to copy:', err.message || String(err));
-      setToastMessage('复制失败');
+      setToastMessage(t.copyFailed);
     }
   };
 
@@ -345,11 +365,11 @@ export default function ClipboardManager() {
   };
 
   const clearAll = async () => {
-    if (confirm('确定要清空所有历史记录吗？')) {
+    if (confirm(t.confirmClear)) {
       const db = await openDB(DB_NAME, 1);
       await db.clear(STORE_NAME);
       loadItems(db);
-      setToastMessage('历史记录已清空');
+      setToastMessage(t.historyCleared);
     }
   };
 
@@ -357,10 +377,12 @@ export default function ClipboardManager() {
     // 提交更改
     setShortcut(tempSettings.shortcut);
     setMaxItems(tempSettings.maxItems);
+    setMaxLines(tempSettings.maxLines);
     setWindowPosition(tempSettings.windowPosition);
     setShowDock(tempSettings.showDock);
     setShowTray(tempSettings.showTray);
     setAutoLaunch(tempSettings.autoLaunch);
+    setLanguage(tempSettings.language);
 
     if (typeof window !== 'undefined' && window.require) {
       const { ipcRenderer } = window.require('electron');
@@ -369,9 +391,11 @@ export default function ClipboardManager() {
 
     localStorage.setItem('shortcut', tempSettings.shortcut);
     localStorage.setItem('maxItems', tempSettings.maxItems.toString());
+    localStorage.setItem('maxLines', tempSettings.maxLines.toString());
     localStorage.setItem('windowPosition', tempSettings.windowPosition);
     localStorage.setItem('showDock', String(tempSettings.showDock));
     localStorage.setItem('showTray', String(tempSettings.showTray));
+    localStorage.setItem('language', tempSettings.language);
     
     setShowSettings(false);
     setIsRecordingShortcut(false);
@@ -486,7 +510,7 @@ export default function ClipboardManager() {
                     ref={searchInputRef}
                     type="text"
                     className="block w-full pl-8 pr-8 py-1.5 bg-gray-100 border-none rounded-md text-sm focus:ring-2 focus:ring-blue-500/50 focus:bg-white transition-all shadow-inner placeholder-gray-400"
-                    placeholder="搜索剪贴板..."
+                    placeholder={t.searchPlaceholder}
                     value={searchQuery}
                     onChange={(e) => {
                     setSearchQuery(e.target.value);
@@ -506,7 +530,7 @@ export default function ClipboardManager() {
             <button 
                 onClick={() => setShowSettings(true)}
                 className="p-1.5 hover:bg-gray-100 rounded-md text-gray-500 transition-colors"
-                title="设置"
+                title={t.settings}
                 style={{ WebkitAppRegion: 'no-drag' } as any}
             >
                 <Settings size={16} />
@@ -515,15 +539,15 @@ export default function ClipboardManager() {
         
         <div className="flex justify-between items-center text-[10px] text-gray-400 px-1">
           <div className="flex gap-3 items-center">
-            <span><kbd className="font-sans bg-gray-100 px-1 rounded">↵</kbd> 粘贴</span>
-            <span><kbd className="font-sans bg-gray-100 px-1 rounded">↑↓</kbd> 选择</span>
+            <span><kbd className="font-sans bg-gray-100 px-1 rounded">↵</kbd> {t.paste}</span>
+            <span><kbd className="font-sans bg-gray-100 px-1 rounded">↑↓</kbd> {t.select}</span>
           </div>
           <button 
             onClick={clearAll} 
             className="hover:text-red-600 transition-colors"
             style={{ WebkitAppRegion: 'no-drag' } as any}
           >
-            清空历史
+            {t.clearHistory}
           </button>
         </div>
       </div>
@@ -569,10 +593,18 @@ export default function ClipboardManager() {
                   </div>
                   
                   {item.type === 'text' ? (
-                    <p className={cn(
-                        "text-xs font-mono whitespace-pre-wrap break-words line-clamp-2 leading-relaxed",
-                        selectedIndex === index ? "text-gray-900" : "text-gray-600"
-                    )}>
+                    <p 
+                      className={cn(
+                        "text-xs font-mono whitespace-pre-wrap break-words leading-relaxed",
+                        selectedIndex === index ? "text-gray-900" : "text-gray-600",
+                        maxLines > 0 ? "overflow-hidden" : ""
+                      )}
+                      style={maxLines > 0 ? {
+                        display: '-webkit-box',
+                        WebkitLineClamp: maxLines,
+                        WebkitBoxOrient: 'vertical'
+                      } : {}}
+                    >
                       {item.content as string}
                     </p>
                   ) : (
@@ -592,7 +624,7 @@ export default function ClipboardManager() {
                     <button
                         onClick={(e) => handleDelete(e, item.id!)}
                         className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                        title="删除"
+                        title={t.delete}
                     >
                         <Trash2 size={12} />
                     </button>
@@ -606,8 +638,8 @@ export default function ClipboardManager() {
               <div className="bg-gray-100 w-12 h-12 rounded-full flex items-center justify-center mx-auto mb-3">
                 <Command size={24} className="opacity-50" />
               </div>
-              <p className="text-sm font-medium text-gray-500">暂无记录</p>
-              <p className="text-xs mt-1">复制 (⌘C) 内容后将自动显示在这里</p>
+              <p className="text-sm font-medium text-gray-500">{t.noRecords}</p>
+              <p className="text-xs mt-1">{t.noRecordsDesc}</p>
             </div>
           )}
         </div>
@@ -618,12 +650,12 @@ export default function ClipboardManager() {
         <div className="absolute inset-0 bg-black/20 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-white rounded-xl shadow-xl w-full max-w-xs p-4 space-y-4">
                 <h3 className="font-medium text-gray-900 flex items-center gap-2">
-                    <Settings size={16} /> 设置
+                    <Settings size={16} /> {t.settings}
                 </h3>
                 
                 <div className="space-y-3">
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">快捷键</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.shortcut}</label>
                         <div 
                             className={cn(
                                 "w-full px-3 py-2 bg-gray-50 border rounded text-sm flex items-center justify-center cursor-pointer transition-colors",
@@ -634,7 +666,7 @@ export default function ClipboardManager() {
                             tabIndex={0}
                         >
                             {isRecordingShortcut ? (
-                                <span className="animate-pulse">请按下快捷键...</span>
+                                <span className="animate-pulse">{t.pressShortcut}</span>
                             ) : (
                                 <div className="flex items-center gap-1 font-mono">
                                     {renderShortcut(tempSettings.shortcut)}
@@ -643,7 +675,7 @@ export default function ClipboardManager() {
                         </div>
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">最大历史记录数</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.maxItems}</label>
                         <input 
                             type="number" 
                             value={tempSettings.maxItems}
@@ -652,22 +684,37 @@ export default function ClipboardManager() {
                         />
                     </div>
                     <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">窗口位置</label>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.maxLines}</label>
+                        <select 
+                            value={tempSettings.maxLines}
+                            onChange={(e) => setTempSettings(prev => ({ ...prev, maxLines: Number(e.target.value) }))}
+                            className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        >
+                            <option value={1}>1</option>
+                            <option value={2}>2</option>
+                            <option value={3}>3</option>
+                            <option value={4}>4</option>
+                            <option value={5}>5</option>
+                            <option value={0}>{t.unlimitedLines}</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">{t.windowPosition}</label>
                         <select 
                             value={tempSettings.windowPosition}
                             onChange={(e) => setTempSettings(prev => ({ ...prev, windowPosition: e.target.value }))}
                             className="w-full px-2 py-1.5 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
                         >
-                            <option value="mouse">跟随鼠标</option>
-                            <option value="top-right">右上角</option>
-                            <option value="top-left">左上角</option>
-                            <option value="bottom-right">右下角</option>
-                            <option value="bottom-left">左下角</option>
+                            <option value="mouse">{t.followMouse}</option>
+                            <option value="top-right">{t.topRight}</option>
+                            <option value="top-left">{t.topLeft}</option>
+                            <option value="bottom-right">{t.bottomRight}</option>
+                            <option value="bottom-left">{t.bottomLeft}</option>
                         </select>
                     </div>
                     
                     <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">显示在程序坞</label>
+                        <label className="text-xs font-medium text-gray-500">{t.showDock}</label>
                         <input 
                             type="checkbox" 
                             checked={tempSettings.showDock}
@@ -677,7 +724,7 @@ export default function ClipboardManager() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">显示在菜单栏</label>
+                        <label className="text-xs font-medium text-gray-500">{t.showTray}</label>
                         <input 
                             type="checkbox" 
                             checked={tempSettings.showTray}
@@ -687,13 +734,25 @@ export default function ClipboardManager() {
                     </div>
 
                     <div className="flex items-center justify-between">
-                        <label className="text-xs font-medium text-gray-500">开机自启</label>
+                        <label className="text-xs font-medium text-gray-500">{t.autoLaunch}</label>
                         <input 
                             type="checkbox" 
                             checked={tempSettings.autoLaunch}
                             onChange={(e) => setTempSettings(prev => ({ ...prev, autoLaunch: e.target.checked }))}
                             className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
                         />
+                    </div>
+
+                    <div className="flex items-center justify-between">
+                        <label className="text-xs font-medium text-gray-500">{t.language}</label>
+                        <select 
+                            value={tempSettings.language}
+                            onChange={(e) => setTempSettings(prev => ({ ...prev, language: e.target.value as Language }))}
+                            className="px-2 py-1 bg-gray-50 border border-gray-200 rounded text-sm focus:ring-1 focus:ring-blue-500 outline-none"
+                        >
+                            <option value="zh">中文</option>
+                            <option value="en">English</option>
+                        </select>
                     </div>
                 </div>
 
@@ -705,13 +764,13 @@ export default function ClipboardManager() {
                         }}
                         className="px-3 py-1.5 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded"
                     >
-                        取消
+                        {t.cancel}
                     </button>
                     <button 
                         onClick={saveSettings}
                         className="px-3 py-1.5 text-xs font-medium text-white bg-blue-600 hover:bg-blue-700 rounded shadow-sm"
                     >
-                        保存
+                        {t.save}
                     </button>
                 </div>
             </div>
