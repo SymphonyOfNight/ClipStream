@@ -20,10 +20,10 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
-        "dmg",
         "zip"
       ],
-      "icon": "public/icon.png"
+      "icon": "public/icon.png",
+      "identity": null
     },
     "win": {
       "target": [
