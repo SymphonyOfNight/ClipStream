@@ -26,11 +26,15 @@
       "icon": "public/icon.png"
     },
     "win": {
-      "target": ["nsis"],
+      "target": [
+        "nsis"
+      ],
       "icon": "public/icon.png"
     },
     "linux": {
-      "target": ["AppImage"],
+      "target": [
+        "AppImage"
+      ],
       "icon": "public/icon.png"
     },
     "files": [
@@ -50,6 +54,7 @@
     "better-sqlite3": "^12.4.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.2.3",
+    "electron-log": "^5.4.3",
     "express": "^4.21.2",
     "idb": "^8.0.3",
     "lucide-react": "^0.546.0",

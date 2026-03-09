@@ -1,6 +1,12 @@
 const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Tray, Menu, nativeImage } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
+const log = require('electron-log');
+
+// 配置 electron-log
+log.transports.file.level = 'info';
+log.transports.console.level = 'info';
+log.info('App starting...');
 
 let mainWindow;
 let tray = null;
@@ -100,7 +106,7 @@ function createTray() {
         if (require('fs').existsSync(svgPath)) {
             iconPath = svgPath;
         } else {
-            console.error('Tray icon not found in any expected location');
+            log.error('Tray icon not found in any expected location');
             iconPath = path.join(__dirname, '../dist/trayTemplate.png'); // 默认为 dist png
         }
     }
@@ -114,22 +120,22 @@ function createTray() {
   let icon = nativeImage.createFromPath(iconPath);
   
   if (icon.isEmpty()) {
-      console.error('Failed to load tray icon from path:', iconPath);
+      log.error('Failed to load tray icon from path:', iconPath);
       // 尝试使用 fs 直接读取文件并从缓冲区创建作为回退
       try {
           const fs = require('fs');
           const buffer = fs.readFileSync(iconPath);
           icon = nativeImage.createFromBuffer(buffer);
           if (icon.isEmpty()) {
-              console.error('Still failed to load icon from buffer');
+              log.error('Still failed to load icon from buffer');
           } else {
-              console.log('Successfully loaded icon from buffer');
+              log.info('Successfully loaded icon from buffer');
           }
       } catch (err) {
-          console.error('Error reading icon file:', err);
+          log.error('Error reading icon file:', err);
       }
   } else {
-      console.log('Successfully loaded tray icon from path:', iconPath);
+      log.info('Successfully loaded tray icon from path:', iconPath);
   }
   
   // macOS 会自动将带有 "Template" 后缀的图片识别为模板图片，无需手动设置
@@ -144,6 +150,10 @@ function createTray() {
             mainWindow.show();
             mainWindow.focus();
         }
+    }},
+    { label: '打开日志目录', click: () => {
+        const { shell } = require('electron');
+        shell.showItemInFolder(log.transports.file.getFile().path);
     }},
     { type: 'separator' },
     { label: '退出', click: () => {
@@ -238,7 +248,7 @@ function registerGlobalShortcut(shortcut) {
     });
     currentShortcut = shortcut;
   } catch (err) {
-    console.error('Failed to register shortcut:', err);
+    log.error('Failed to register shortcut:', err);
   }
 }
 
@@ -340,12 +350,17 @@ ipcMain.on('set-show-tray', (event, show) => {
 
   ipcMain.on('paste-content', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
+      log.info('Received paste-content request from renderer');
       // 执行实际粘贴命令的函数
       const performPaste = () => {
         // 双重检查：如果窗口又显示了（用户可能快速重新激活了窗口），则取消粘贴
-        if (mainWindow.isVisible()) return;
+        if (mainWindow.isVisible()) {
+          log.warn('Paste cancelled: window became visible again');
+          return;
+        }
 
         try {
+          log.info('Executing AppleScript for paste simulation');
           // macOS: 使用 AppleScript 发送 Command+V
           // 优化：
           // 1. 拆分 delay 和 keystroke，确保 System Events 有时间响应
@@ -356,25 +371,44 @@ ipcMain.on('set-show-tray', (event, show) => {
               keystroke "v" using command down
             end tell
           `;
-          exec(`osascript -e '${script}'`, (error) => {
-            if (error) console.error('Paste execution failed:', error);
+          exec(`osascript -e '${script}'`, (error, stdout, stderr) => {
+            if (error) {
+              log.error('Paste execution failed:', error.message);
+              log.error('Paste stderr:', stderr);
+            } else {
+              log.info('Paste executed successfully');
+            }
           });
         } catch (err) {
-          console.error('Paste simulation error:', err);
+          log.error('Paste simulation error:', err.message, err.stack);
         }
       };
 
       // 1. 立即隐藏窗口，强制操作系统开始切换焦点
       // 使用 app.hide() 而不是 mainWindow.hide() 在 macOS 上通常能更可靠地将焦点交还给前一个应用
+      log.info('Hiding app to return focus to previous window');
       app.hide();
 
       // 2. 等待焦点切换完成
       // 之前的基于 blur 事件的逻辑在某些系统高负载下不可靠。
       // 改为固定等待 100ms。这是一个在“响应速度”和“可靠性”之间的最佳平衡点。
       // 100ms 对于用户来说几乎是瞬间的，但对于操作系统完成窗口切换和焦点对焦来说通常已经足够。
-      setTimeout(performPaste, 100);
+      setTimeout(() => {
+        log.info('Timeout reached, attempting to perform paste');
+        performPaste();
+      }, 100);
+    } else {
+      log.warn('paste-content received but mainWindow is invalid');
     }
   });
+
+ipcMain.on('log-message', (event, { level, message, data }) => {
+  if (log[level]) {
+    log[level](`[Renderer] ${message}`, ...(data || []));
+  } else {
+    log.info(`[Renderer] ${message}`, ...(data || []));
+  }
+});
 
 app.on('before-quit', () => {
   app.isQuitting = true;

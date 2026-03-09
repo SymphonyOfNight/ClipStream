@@ -286,7 +286,20 @@ export default function ClipboardManager() {
   });
 
   const handleCopyAndPaste = async (item: ClipboardItem) => {
+    const logToMain = (level: 'info' | 'warn' | 'error', message: string, ...data: any[]) => {
+        if (typeof window !== 'undefined' && window.require) {
+            try {
+                window.require('electron').ipcRenderer.send('log-message', { level, message, data });
+            } catch (e) {
+                console[level](message, ...data);
+            }
+        } else {
+            console[level](message, ...data);
+        }
+    };
+
     try {
+      logToMain('info', `Attempting to copy and paste item of type: ${item.type}`);
       if (item.type === 'text') {
         await navigator.clipboard.writeText(item.content as string);
       } else if (item.type === 'image') {
@@ -301,12 +314,13 @@ export default function ClipboardManager() {
       // 在主进程中触发粘贴
       if (typeof window !== 'undefined' && window.require) {
         const { ipcRenderer } = window.require('electron');
+        logToMain('info', 'Sending paste-content IPC message to main process');
         ipcRenderer.send('paste-content');
       }
 
       setToastMessage('已复制并粘贴');
-    } catch (err) {
-      console.error('Failed to copy:', err);
+    } catch (err: any) {
+      logToMain('error', 'Failed to copy:', err.message || String(err));
       setToastMessage('复制失败');
     }
   };
@@ -393,6 +407,15 @@ export default function ClipboardManager() {
     if (typeof window !== 'undefined' && window.require) {
       try {
         const { ipcRenderer } = window.require('electron');
+        
+        const logToMain = (level: 'info' | 'warn' | 'error', message: string, ...data: any[]) => {
+          try {
+            ipcRenderer.send('log-message', { level, message, data });
+          } catch (e) {
+            console[level](message, ...data);
+          }
+        };
+
         const handleClipboardChanged = async (_: any, item: any) => {
           // 动态导入以避免 SSR 问题（如果有的话）（虽然这是 SPA）
           const { addClipboardItem } = await import('../services/db');
@@ -421,7 +444,7 @@ export default function ClipboardManager() {
         return () => {
           ipcRenderer.removeListener('clipboard-changed', handleClipboardChanged);
         };
-      } catch (e) {
+      } catch (e: any) {
         console.error('Electron IPC not available', e);
       }
     }
