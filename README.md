@@ -1,81 +1,79 @@
-# ClipStream
+# ClipStream 📋
 
-ClipStream 是一款专为 macOS 设计的极简、高效的剪贴板历史记录管理器。基于 Electron 和 React 构建，为您提供无缝的复制粘贴体验。
+A sleek, fast, and modern clipboard manager built with Electron, React, and Tailwind CSS. ClipStream keeps track of your copied text and images, allowing you to search through your history and paste items instantly with a single keystroke.
 
-## ✨ 核心特性
+![ClipStream](public/icon.png)
 
-- **多格式支持**：自动记录您复制的文本和图片。
-- **全局快捷键**：随时随地通过全局快捷键（默认 `Cmd + Shift + V`）呼出剪贴板面板。
-- **极速搜索**：支持对历史记录进行快速模糊搜索。
-- **全键盘操作**：
-  - `↑` / `↓` 切换选中项
-  - `Enter` 自动粘贴到当前激活的应用程序
-  - `Cmd + K` 快速聚焦搜索框
-  - `Esc` 清空搜索或关闭窗口
-- **macOS 原生体验**：
-  - 使用 AppleScript 实现可靠的自动粘贴。
-  - 支持毛玻璃（Vibrancy）视觉效果，UI 现代且美观。
-  - 支持隐藏 Dock 栏图标，仅在顶部菜单栏（Tray）静默运行。
-- **高度可定制**：
-  - 自定义全局快捷键。
-  - 自定义历史记录最大保存数量。
-  - 自定义窗口弹出位置（跟随鼠标、屏幕四角）。
+## ✨ Features
 
-## 🛠 技术栈
+*   **📝 Text & Image Support:** Automatically saves your copied text snippets and images.
+*   **🔍 Quick Search:** Instantly find past clippings with a fast, real-time search bar.
+*   **⌨️ Global Shortcuts:** Access your clipboard history from anywhere using a global hotkey (Default: `Cmd+Shift+V` or `Ctrl+Shift+V`).
+*   **⚙️ Highly Customizable:** 
+    *   Adjust window positioning (Follow mouse, Top Right, Bottom Left, etc.).
+    *   Set maximum history items and display lines.
+    *   Toggle Dock and Menu Bar (Tray) visibility.
+*   **🌍 Internationalization (i18n):** Fully supports English and Simplified Chinese.
+*   **🚀 Auto-launch:** Option to start automatically at system login.
+*   **🎨 Modern UI:** Beautiful, minimalist interface built with Tailwind CSS and smooth animations.
 
-- **框架**: [Electron](https://www.electronjs.org/) + [React](https://react.dev/)
-- **构建工具**: [Vite](https://vitejs.dev/)
-- **样式**: [Tailwind CSS](https://tailwindcss.com/)
-- **本地存储**: [IndexedDB](https://developer.mozilla.org/en-US/docs/Web/API/IndexedDB_API) (借助 `idb` 库)
-- **动画**: [Framer Motion](https://www.framer.com/motion/)
-- **图标**: [Lucide React](https://lucide.dev/)
+## 🛠️ Tech Stack
 
-## 🚀 快速开始
+*   **Framework:** [Electron](https://www.electronjs.org/)
+*   **Frontend:** [React 19](https://react.dev/) + [Vite](https://vitejs.dev/)
+*   **Styling:** [Tailwind CSS 4](https://tailwindcss.com/)
+*   **Icons:** [Lucide React](https://lucide.dev/)
+*   **Database:** IndexedDB / SQLite
 
-### 环境要求
+## 🚀 Getting Started
 
-- Node.js (推荐 v18+)
-- 仅支持 macOS 操作系统
+### Prerequisites
 
-### 安装依赖
+Make sure you have [Node.js](https://nodejs.org/) installed on your machine.
 
-```bash
-npm install
-```
+### Installation
 
-### 开发模式
+1. Clone the repository:
+   ```bash
+   git clone https://github.com/yourusername/clipstream.git
+   cd clipstream
+   ```
 
-启动本地开发服务器并打开 Electron 窗口：
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
 
-```bash
-npm run dev
-```
+3. Start the development server:
+   ```bash
+   npm run electron:dev
+   ```
 
-### 打包构建
+### Building for Production
 
-将应用打包为 macOS 可执行文件 (`.dmg` 或 `.app`)：
+To build the application for your current operating system:
 
 ```bash
 npm run electron:build
 ```
 
-打包后的文件将生成在 `dist-electron` 或 `release` 目录中（具体取决于您的 electron-builder 配置）。
+The compiled application will be available in the `dist-electron/` or `release/` directory.
 
-## ⚙️ 设置选项
+## 🍏 Mac App Store (MAS) Deployment
 
-点击主界面右上角的“设置”图标（⚙️），您可以调整以下选项：
+ClipStream is configured to support Mac App Store deployment with App Sandbox enabled. 
 
-1. **快捷键**：点击输入框并按下您想要的组合键即可修改全局唤醒快捷键。
-2. **最大历史记录数**：设置数据库中最多保留多少条剪贴板记录（默认 50 条）。
-3. **窗口位置**：设置呼出面板时的显示位置（跟随鼠标、左上角、右上角、左下角、右下角）。
-4. **显示在程序坞**：控制应用是否在底部 Dock 栏显示图标。
-5. **显示在菜单栏**：控制应用是否在顶部菜单栏显示图标。
+To build for MAS, you need to:
+1. Obtain your `3rd Party Mac Developer Application` and `3rd Party Mac Developer Installer` certificates from the Apple Developer Portal.
+2. Create a Provisioning Profile for your App ID, download it, rename it to `embedded.provisionprofile`, and place it in the `build/` directory.
+3. Update the `TEAM_ID` in `build/entitlements.mas.plist` with your actual Apple Team ID.
+4. Run the build command:
+   ```bash
+   npm run electron:build
+   ```
 
-## 📝 注意事项
+*Note: The app uses `osascript` (System Events) to simulate the `Cmd+V` keystroke for automatic pasting. This requires the `com.apple.security.temporary-exception.apple-events` entitlement, which may require explanation during the App Store review process.*
 
-- **辅助功能权限**：由于 ClipStream 需要使用 AppleScript 模拟键盘按键 (`Cmd + V`) 来实现自动粘贴功能，首次运行时 macOS 可能会要求您在“系统设置 -> 隐私与安全性 -> 辅助功能”中授予该应用权限。
-- **纯 macOS 应用**：本项目已移除对 Windows 和 Linux 的兼容代码，专注于提供最佳的 macOS 体验。
+## 📄 License
 
-## 📄 开源协议
-
-MIT License
+This project is licensed under the MIT License.
