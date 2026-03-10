@@ -1,3 +1,5 @@
+[简体中文](./README_zh.md) | **English**
+
 # ClipStream 📋
 
 A sleek, fast, and modern clipboard manager built with Electron, React, and Tailwind CSS. ClipStream keeps track of your copied text and images, allowing you to search through your history and paste items instantly with a single keystroke.
@@ -59,20 +61,13 @@ npm run electron:build
 
 The compiled application will be available in the `dist-electron/` or `release/` directory.
 
-## 🍏 Mac App Store (MAS) Deployment
+## 📸 Screenshots
 
-ClipStream is configured to support Mac App Store deployment with App Sandbox enabled. 
-
-To build for MAS, you need to:
-1. Obtain your `3rd Party Mac Developer Application` and `3rd Party Mac Developer Installer` certificates from the Apple Developer Portal.
-2. Create a Provisioning Profile for your App ID, download it, rename it to `embedded.provisionprofile`, and place it in the `build/` directory.
-3. Update the `TEAM_ID` in `build/entitlements.mas.plist` with your actual Apple Team ID.
-4. Run the build command:
-   ```bash
-   npm run electron:build
-   ```
-
-*Note: The app uses `osascript` (System Events) to simulate the `Cmd+V` keystroke for automatic pasting. This requires the `com.apple.security.temporary-exception.apple-events` entitlement, which may require explanation during the App Store review process.*
+<div align="center">
+  <img src="public/screenshot1.png" alt="ClipStream Main Interface" width="45%" />
+  &nbsp; &nbsp;
+  <img src="public/screenshot2.png" alt="ClipStream Settings" width="45%" />
+</div>
 
 ## 📄 License
 
