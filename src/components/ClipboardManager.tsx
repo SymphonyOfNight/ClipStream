@@ -803,14 +803,30 @@ export default function ClipboardManager() {
                                 <div className="flex items-center gap-2 text-sm font-medium text-gray-700">
                                     <Globe size={14} className="text-gray-400" /> {t.language}
                                 </div>
-                                <select 
-                                    value={tempSettings.language}
-                                    onChange={(e) => setTempSettings(prev => ({ ...prev, language: e.target.value as Language }))}
-                                    className="px-3 py-1.5 bg-gray-50 border border-gray-200 rounded-lg text-sm focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 outline-none transition-all appearance-none text-center min-w-[80px]"
-                                >
-                                    <option value="zh">中文</option>
-                                    <option value="en">English</option>
-                                </select>
+                                <div className="flex items-center bg-gray-100 p-0.5 rounded-lg border border-gray-200/50">
+                                    <button
+                                        onClick={() => setTempSettings(prev => ({ ...prev, language: 'zh' }))}
+                                        className={cn(
+                                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                                            tempSettings.language === 'zh' 
+                                                ? "bg-white text-gray-900 shadow-sm" 
+                                                : "text-gray-500 hover:text-gray-700"
+                                        )}
+                                    >
+                                        中文
+                                    </button>
+                                    <button
+                                        onClick={() => setTempSettings(prev => ({ ...prev, language: 'en' }))}
+                                        className={cn(
+                                            "px-3 py-1 text-xs font-medium rounded-md transition-all",
+                                            tempSettings.language === 'en' 
+                                                ? "bg-white text-gray-900 shadow-sm" 
+                                                : "text-gray-500 hover:text-gray-700"
+                                        )}
+                                    >
+                                        EN
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </div>
