@@ -11,7 +11,7 @@
     "clean": "rm -rf dist dist-electron",
     "lint": "tsc --noEmit",
     "electron:dev": "concurrently \"npm run dev\" \"wait-on http://localhost:3000 && electron .\"",
-    "electron:build": "npm run generate-icons && npm run build && ELECTRON_BUILDER_BINARIES_MIRROR=https://mirrors.huaweicloud.com/electron-builder-binaries/ electron-builder",
+    "electron:build": "npm run generate-icons && npm run build && CSC_IDENTITY_AUTO_DISCOVERY=false ELECTRON_BUILDER_BINARIES_MIRROR=https://mirrors.huaweicloud.com/electron-builder-binaries/ electron-builder",
     "generate-icons": "node scripts/generate-icons.js"
   },
   "build": {
@@ -20,19 +20,10 @@
     "mac": {
       "category": "public.app-category.utilities",
       "target": [
-        "mas",
         "zip"
       ],
       "icon": "public/icon.png",
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false
-    },
-    "mas": {
-      "entitlements": "build/entitlements.mas.plist",
-      "entitlementsInherit": "build/entitlements.mas.inherit.plist",
-      "provisioningProfile": "build/embedded.provisionprofile",
-      "hardenedRuntime": false,
-      "gatekeeperAssess": false,
+      "identity": null,
       "extendInfo": {
         "NSAppleEventsUsageDescription": "Please allow access to System Events to enable automatic pasting of clipboard history items."
       }
