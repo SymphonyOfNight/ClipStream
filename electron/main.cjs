@@ -11,7 +11,7 @@ log.info('App starting...');
 let mainWindow;
 let tray = null;
 let lastText = '';
-let lastImage = '';
+let lastImageBmp = null;
 let currentShortcut = 'CommandOrControl+Shift+V';
 let windowPosition = 'mouse'; // mouse, top-right, top-left, bottom-right, bottom-left
 let ignoreBlur = false;
@@ -257,57 +257,54 @@ function startClipboardPolling(win) {
     if (!win || win.isDestroyed()) return;
 
     const formats = clipboard.availableFormats();
-    
-    // 增强的文件检测：如果剪贴板包含文件路径则忽略
-    // 这可以防止将文件副本记录为文本（路径）或图像（图标）
-    const isFile = formats.some(f => 
-       f === 'public.file-url' || 
-       f === 'text/uri-list' || 
-       f === 'FileName' || 
-       f === 'FileNameW' || 
-       f === 'x-special/gnome-copied-files' ||
-       // 检查其他常见的文件指示符
-       (f.toLowerCase().includes('file') && f.toLowerCase().includes('url'))
+
+    // 检测是否为本地文件复制
+    const isFile = formats.some(f =>
+       f === 'public.file-url' ||
+       f === 'NSFilenamesPboardType' ||
+       f === 'FileName' ||
+       f === 'FileNameW' ||
+       f === 'x-special/gnome-copied-files'
     );
 
-    if (isFile) {
-      return;
-    }
-
-    const text = clipboard.readText();
-    
-    // 仅在没有文本时尝试读取图像，或者如果我们想要支持混合内容。
-    // 但通常我们会优先考虑。
-    // 此外，检查格式是否包含图像类型有助于避免误报。
-    const hasImageFormat = formats.some(f => 
-        f.startsWith('image/') || 
-        f === 'public.png' || 
-        f === 'public.tiff' || 
+    // 如果是文件，我们忽略图像部分（通常只是文件图标），只处理文本部分（文件路径）
+    const hasImage = !isFile && formats.some(f =>
+        f.startsWith('image/') ||
+        f === 'public.png' ||
+        f === 'public.tiff' ||
         f === 'Bitmap' ||
         f === 'Dib'
     );
 
-    let imageDataUrl = '';
-    if (hasImageFormat) {
-        const image = clipboard.readImage();
-        imageDataUrl = image.isEmpty() ? '' : image.toDataURL();
+    const text = clipboard.readText();
+    let isNewText = text && text.trim() !== lastText.trim();
+    let isNewImage = false;
+    let img = null;
+    let bmp = null;
+
+    if (hasImage) {
+        img = clipboard.readImage();
+        if (!img.isEmpty()) {
+            bmp = img.toBitmap();
+            if (!lastImageBmp || Buffer.compare(bmp, lastImageBmp) !== 0) {
+                isNewImage = true;
+            }
+        }
     }
 
-    if (text && text.trim() !== lastText.trim()) {
-      lastText = text;
-      win.webContents.send('clipboard-changed', { type: 'text', content: text, timestamp: Date.now() });
+    if (isNewImage) {
+        lastImageBmp = bmp;
+        lastText = text; // 同步文本，避免同一复制事件触发两次
+        const dataUrl = img.toDataURL();
+        win.webContents.send('clipboard-changed', { type: 'image', content: dataUrl, timestamp: Date.now() });
+    } else if (isNewText) {
+        lastText = text;
+        if (!hasImage) {
+            lastImageBmp = null; // 只有在剪贴板没有图片时才清空图片缓存
+        }
+        win.webContents.send('clipboard-changed', { type: 'text', content: text, timestamp: Date.now() });
     }
-
-    if (imageDataUrl && imageDataUrl !== lastImage) {
-      lastImage = imageDataUrl;
-      // 如果我们同时拥有文本和图像（很少见但可能），我们可能想要首选其中一个或发送两者。
-      // 当前逻辑独立发送两者。
-      // 但是如果是图像复制，通常文本为空或只是元数据。
-      // 如果存在文本，我们已经发送了它。
-      // 如果是新的，我们也发送图像。
-      win.webContents.send('clipboard-changed', { type: 'image', content: imageDataUrl, timestamp: Date.now() });
-    }
-  }, 200);
+  }, 500);
 }
 
 
