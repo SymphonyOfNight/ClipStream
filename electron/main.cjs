@@ -1,4 +1,4 @@
-const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Tray, Menu, nativeImage } = require('electron');
+const { app, BrowserWindow, globalShortcut, clipboard, ipcMain, screen, Tray, Menu, nativeImage, systemPreferences, dialog } = require('electron');
 const path = require('path');
 const { exec } = require('child_process');
 const log = require('electron-log');
@@ -359,6 +359,25 @@ ipcMain.on('set-auto-launch', (event, enable) => {
   ipcMain.on('paste-content', () => {
     if (mainWindow && !mainWindow.isDestroyed()) {
       log.info('Received paste-content request from renderer');
+
+      // macOS 权限检查
+      if (process.platform === 'darwin') {
+        if (!systemPreferences.isTrustedAccessibilityClient(false)) {
+          log.warn('Missing accessibility permissions for pasting');
+          // 触发系统权限弹窗
+          systemPreferences.isTrustedAccessibilityClient(true);
+          
+          dialog.showMessageBox({
+            type: 'warning',
+            title: '需要辅助功能权限',
+            message: '无法自动粘贴：缺少“辅助功能”权限',
+            detail: 'macOS 安全机制要求授予权限才能模拟按键。\n\n请打开“系统设置 > 隐私与安全性 > 辅助功能”，勾选您正在使用的终端（如 Terminal, iTerm, VSCode）或 ClipStream 应用，然后重试。',
+            buttons: ['我知道了']
+          });
+          return; // 终止粘贴流程
+        }
+      }
+
       // 执行实际粘贴命令的函数
       const performPaste = () => {
         // 双重检查：如果窗口又显示了（用户可能快速重新激活了窗口），则取消粘贴
@@ -369,10 +388,6 @@ ipcMain.on('set-auto-launch', (event, enable) => {
 
         try {
           log.info('Executing AppleScript for paste simulation');
-          // macOS: 使用 AppleScript 发送 Command+V
-          // 优化：
-          // 1. 拆分 delay 和 keystroke，确保 System Events 有时间响应
-          // 2. 增加 delay 0.05 (50ms) 在脚本内部，作为系统级缓冲
           const script = `
             tell application "System Events"
               delay 0.05
@@ -383,6 +398,16 @@ ipcMain.on('set-auto-launch', (event, enable) => {
             if (error) {
               log.error('Paste execution failed:', error.message);
               log.error('Paste stderr:', stderr);
+              // 如果仍然报 1002 错误，可能是权限刚给还没生效，或者被拒绝
+              if (stderr.includes('1002') || stderr.includes('不允许发送按键')) {
+                dialog.showMessageBox({
+                  type: 'error',
+                  title: '粘贴失败',
+                  message: '系统拒绝了模拟按键请求',
+                  detail: '请确保在“系统设置 > 隐私与安全性 > 辅助功能”中正确勾选了当前应用。如果已经勾选，请尝试取消勾选并重新勾选，或者重启应用。',
+                  buttons: ['确定']
+                });
+              }
             } else {
               log.info('Paste executed successfully');
             }
@@ -393,14 +418,10 @@ ipcMain.on('set-auto-launch', (event, enable) => {
       };
 
       // 1. 立即隐藏窗口，强制操作系统开始切换焦点
-      // 使用 app.hide() 而不是 mainWindow.hide() 在 macOS 上通常能更可靠地将焦点交还给前一个应用
       log.info('Hiding app to return focus to previous window');
       app.hide();
 
       // 2. 等待焦点切换完成
-      // 之前的基于 blur 事件的逻辑在某些系统高负载下不可靠。
-      // 改为固定等待 100ms。这是一个在“响应速度”和“可靠性”之间的最佳平衡点。
-      // 100ms 对于用户来说几乎是瞬间的，但对于操作系统完成窗口切换和焦点对焦来说通常已经足够。
       setTimeout(() => {
         log.info('Timeout reached, attempting to perform paste');
         performPaste();
