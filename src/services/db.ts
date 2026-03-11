@@ -36,7 +36,7 @@ export const addClipboardItem = async (item: Omit<ClipboardItem, 'id'>) => {
   const tx = db.transaction(STORE_NAME, 'readwrite');
   const store = tx.store;
   
-  // Deduplication: Check if content already exists
+  // Deduplication: Check if content already exists (only for text)
   let cursor = await store.openCursor();
   let existingId: number | undefined;
 
@@ -49,13 +49,8 @@ export const addClipboardItem = async (item: Omit<ClipboardItem, 'id'>) => {
           existingId = existingItem.id;
           break;
         }
-      } else if (item.type === 'image' && item.preview && existingItem.preview) {
-        // For images, compare the preview string (base64) as a proxy for content equality
-        if (item.preview === existingItem.preview) {
-          existingId = existingItem.id;
-          break;
-        }
       }
+      // 图片不再进行重复检测，直接作为新记录插入，大幅提升性能
     }
     cursor = await cursor.continue();
   }

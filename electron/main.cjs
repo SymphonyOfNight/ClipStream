@@ -304,7 +304,7 @@ function startClipboardPolling(win) {
         }
         win.webContents.send('clipboard-changed', { type: 'text', content: text, timestamp: Date.now() });
     }
-  }, 500);
+  }, 200);
 }
 
 
@@ -422,10 +422,11 @@ ipcMain.on('set-auto-launch', (event, enable) => {
       app.hide();
 
       // 2. 等待焦点切换完成
+      // 调整为 200ms：确保系统有充足的时间完成窗口切换，提高自动粘贴的成功率
       setTimeout(() => {
         log.info('Timeout reached, attempting to perform paste');
         performPaste();
-      }, 100);
+      }, 200);
     } else {
       log.warn('paste-content received but mainWindow is invalid');
     }
